@@ -14,13 +14,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   };
 
   return (
-    <div className="search-container">
-      <h2>Busca de Produtos para Bebês</h2>
+    <div className="search-bar-content">
+      <h2>Consulte a opinião da Elisa sobre os produtos que ela recomenda</h2>
       <form onSubmit={handleSubmit}>
         <div className="search-input-container">
           <input
             type="text"
-            placeholder="Digite o produto para bebê que você procura..."
+            placeholder="Digite o produto que você procura..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="search-input"

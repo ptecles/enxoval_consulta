@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import SearchBar from './components/SearchBar';
+import ProductModal from './components/ProductModal';
 import ProductService, { Product } from './services/ProductService';
 
-function App() {
+const App: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Filter states
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Fetch products from Google Sheets when component mounts
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProductData = async () => {
       try {
         setIsLoading(true);
         const products = await ProductService.fetchProducts();
@@ -39,15 +40,13 @@ function App() {
         setCategoryOptions(uniqueCategories);
       } catch (err) {
         console.error('Error loading products:', err);
-        setError('Failed to load products. Using backup data instead.');
+        setError('Failed to load products. Please try again later.');
       } finally {
         setIsLoading(false);
-        // If the CSV loading fails, we could set some backup data here
-        // or implement a retry mechanism
       }
     };
 
-    fetchProducts();
+    fetchProductData();
   }, []);
 
   const handleSearch = (query: string) => {
@@ -83,10 +82,20 @@ function App() {
     setHasSearched(true);
   };
 
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  };
+
   return (
     <div className="App">
       <header className="App-header-top">
-        <h1>Busca Produtos para Bebê</h1>
+        <h1>Enxoval Inteligente: consultor de produtos</h1>
       </header>
       <main className="App-main">
         <div className="search-container">
@@ -147,23 +156,20 @@ function App() {
                   <div className="product-info">
                     <h3>{product.name}</h3>
                     {product.marca && <p className="product-brand"><strong>Marca:</strong> {product.marca}</p>}
-                    <p>{product.description}</p>
                     <p className="product-category">Categoria: {product.category}</p>
-                    <p className="product-price">R$ {product.price.toFixed(2)}</p>
-                    {product.opiniao && <p className="product-opinion"><strong>Opinião:</strong> {product.opiniao}</p>}
-                    {product.link && (
-                      <a 
-                        href={product.link.startsWith('http') ? product.link : `https://${product.link}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="product-link"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        Ver produto
-                      </a>
+                    {product.imageUrl && product.imageUrl !== 'https://via.placeholder.com/150' && (
+                      <div className="product-image">
+                        <img src={product.imageUrl} alt={product.name} />
+                      </div>
                     )}
+                    <p>{product.description}</p>
+                    {product.opiniao && <p className="product-opinion"><strong>Opinião:</strong> {product.opiniao}</p>}
+                    <button 
+                      className="product-link"
+                      onClick={() => handleProductClick(product)}
+                    >
+                      Ver opinião
+                    </button>
                   </div>
                 </div>
               ))
@@ -172,14 +178,28 @@ function App() {
               <div className="search-instructions">
                 <p>Digite um termo para buscar produtos para bebês</p>
                 <p>Exemplos: fralda, mamadeira, carrinho...</p>
-                <p className="data-source">Dados carregados do Google Sheets: {allProducts.length} produtos</p>
               </div>
             )}
           </div>
         )}
       </main>
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-logo">
+            <img src="/images/logo.png" alt="Logo" className="logo-image" />
+          </div>
+          <div className="footer-copyright">
+            <p>Copyright © 2025 Inc. Todos os direitos reservados. Edufe Digital CNPJ: 48.796.931/0001-74</p>
+          </div>
+        </div>
+      </footer>
+      <ProductModal 
+        product={selectedProduct}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
-}
+};
 
 export default App;
