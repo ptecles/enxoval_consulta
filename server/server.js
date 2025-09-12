@@ -5,7 +5,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 console.log('Verificando carregamento das variáveis de ambiente:');
 console.log('- HOTMART_CLIENT_ID:', process.env.HOTMART_CLIENT_ID ? 'configurado' : 'não definido');
 console.log('- HOTMART_CLIENT_SECRET:', process.env.HOTMART_CLIENT_SECRET ? 'configurado' : 'não definido');
-console.log('- HOTMART_BASIC_AUTH:', process.env.HOTMART_BASIC_AUTH ? 'configurado' : 'não definido');
+console.log('- HOTMART_AUTH:', process.env.HOTMART_BASIC_AUTH ? 'configurado' : 'não definido');
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
@@ -38,7 +38,7 @@ class HotmartTokenManager {
     console.log('HotmartTokenManager inicializado com:');
     console.log('- Client ID:', this.clientId ? this.clientId.substring(0, 8) + '...' : 'não definido');
     console.log('- Client Secret:', this.clientSecret ? 'configurado' : 'não definido');
-    console.log('- Basic Auth:', this.basicAuth ? 'configurado' : 'não definido');
+    console.log('- Auth Token:', this.basicAuth ? 'configurado' : 'não definido');
   }
 
   async getAccessToken() {
@@ -50,24 +50,20 @@ class HotmartTokenManager {
     
     console.log('Obtendo novo token da Hotmart...');
     try {
-      // Gerar o header de autorização Basic
       let authHeader;
       
       if (this.basicAuth) {
-        // Se já temos o código Basic Auth completo
         if (this.basicAuth.startsWith('Basic ')) {
-          // Remover o prefixo 'Basic ' para evitar duplicação
           const authValue = this.basicAuth.substring(6);
           authHeader = `Basic ${authValue}`;
         } else {
           authHeader = `Basic ${this.basicAuth}`;
         }
-        console.log('Usando Basic Auth fornecido diretamente');
+        console.log('Usando autenticação fornecida diretamente');
       } else if (this.clientId && this.clientSecret) {
-        // Gerar Basic Auth a partir do client ID e secret
         const base64Credentials = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
         authHeader = `Basic ${base64Credentials}`;
-        console.log('Usando Basic Auth gerado a partir de client ID e secret');
+        console.log('Usando autenticação gerada a partir de credenciais');
       } else {
         throw new Error('Credenciais da Hotmart não configuradas');
       }
@@ -100,7 +96,7 @@ class HotmartTokenManager {
       console.log('Comparando com o exemplo curl:');
       console.log(`curl --location --request POST 'https://api-sec-vlc.hotmart.com/security/oauth/token?grant_type=client_credentials&client_id=:client_id&client_secret=:client_secret' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic :basic'`);
+--header 'Authorization: :auth'`);
       
       // Verificar resposta
       console.log('Status da resposta do token:', tokenResponse.status);
@@ -220,21 +216,17 @@ app.get('/api/check-hotmart-token', async (req, res) => {
     const apiUrl = 'https://api-sec-vlc.hotmart.com/security/oauth/check_token';
     console.log(`Verificando token em: ${apiUrl}`);
     
-    // Gerar o header de autorização Basic
     let basicAuth = process.env.HOTMART_BASIC_AUTH;
     let authHeader;
     
     if (basicAuth) {
-      // Se já temos o código Basic Auth completo
       if (basicAuth.startsWith('Basic ')) {
-        // Remover o prefixo 'Basic ' para evitar duplicação
         const authValue = basicAuth.substring(6);
         authHeader = `Basic ${authValue}`;
       } else {
         authHeader = `Basic ${basicAuth}`;
       }
     } else {
-      // Gerar Basic Auth a partir do client ID e secret
       const base64Credentials = Buffer.from(`${process.env.HOTMART_CLIENT_ID}:${process.env.HOTMART_CLIENT_SECRET}`).toString('base64');
       authHeader = `Basic ${base64Credentials}`;
     }
@@ -400,21 +392,17 @@ app.post('/api/verify-hotmart-customer', async (req, res) => {
       console.log(`Consultando histórico de vendas na Hotmart: ${hotmartApiUrl}?transaction_status=APPROVED`);
       
       try {
-        // Gerar o header de autorização Basic
         let basicAuth = process.env.HOTMART_BASIC_AUTH;
         let authHeader;
         
         if (basicAuth) {
-          // Se já temos o código Basic Auth completo
           if (basicAuth.startsWith('Basic ')) {
-            // Remover o prefixo 'Basic ' para evitar duplicação
             const authValue = basicAuth.substring(6);
             authHeader = `Basic ${authValue}`;
           } else {
             authHeader = `Basic ${basicAuth}`;
           }
         } else {
-          // Gerar Basic Auth a partir do client ID e secret
           const base64Credentials = Buffer.from(`${process.env.HOTMART_CLIENT_ID}:${process.env.HOTMART_CLIENT_SECRET}`).toString('base64');
           authHeader = `Basic ${base64Credentials}`;
         }
