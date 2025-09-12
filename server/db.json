@@ -1,0 +1,26 @@
+{
+  "users": [
+    {
+      "email": "teste@exemplo.com",
+      "createdAt": "2025-06-29T15:00:00.000Z",
+      "addedManually": true
+    },
+    {
+      "id": "1753488629149",
+      "email": "ptecles@gmail.com",
+      "createdAt": "2025-07-26T00:10:29.149Z",
+      "hotmartData": {
+        "email": "ptecles@gmail.com",
+        "isCustomer": true,
+        "name": "Cliente Hotmart",
+        "subscriptions": [
+          {
+            "plan": "Premium",
+            "status": "active"
+          }
+        ]
+      }
+    }
+  ],
+  "webhookLogs": []
+}

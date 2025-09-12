@@ -10,10 +10,11 @@ export interface Product {
   opiniao: string;
   link: string;
   marca: string;
+  opiniao_consulta: string;
 }
 
 class ProductService {
-  private csvUrl: string = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTgpNbNTKQOynY4nuZWn3CSjkygt-SMtfH6GpXAqn0ghkyeY_5yAkh8SxGpVkHrUIJQYeiW7nUP89R/pub?output=csv';
+  private csvUrl: string = 'https://docs.google.com/spreadsheets/d/1btIezyZKBgMJpLwQ6xyZ2_zqkeo6p6Yv9i3Zei7WviI/export?format=csv';
 
   async fetchProducts(): Promise<Product[]> {
     try {
@@ -52,17 +53,33 @@ class ProductService {
       
       // Map CSV data to our Product interface
       // Map 'Nome' column to name property, with fallbacks to other potential column names
-      products.push({
+      const product = {
         id: row.id ? parseInt(row.id) : i,
         name: row.Nome || row.nome || row.name || '',
         description: row.description || row.Descricao || row.descricao || '',
         price: row.price || row.Preco || row.preco ? parseFloat(row.price || row.Preco || row.preco) : 0,
-        imageUrl: row.imageUrl || row.Imagem || row.imagem || 'https://via.placeholder.com/150',
+        imageUrl: row.imagem || row.Imagem || row.imageUrl || row.ImageUrl || 'https://via.placeholder.com/150',
         category: row.category || row.Categoria || row.categoria || 'Uncategorized',
         opiniao: row.Opiniao || row.opiniao || row.Opinion || row.opinion || '',
         link: row.Link || row.link || row.URL || row.url || '',
-        marca: row.Marca || row.marca || row.Brand || row.brand || ''
-      });
+        marca: row.Marca || row.marca || row.Brand || row.brand || '',
+        opiniao_consulta: row.opiniao_consulta || row.Opiniao_consulta || row.OPINIAO_CONSULTA || row['opiniao_consulta'] || ''
+      };
+      
+      // Debug: Log the headers and opiniao_consulta value for first few products
+      if (i <= 3) {
+        console.log('Headers found:', headers);
+        console.log(`Product ${i} - opiniao_consulta:`, `"${product.opiniao_consulta}"`);
+        console.log('Raw row data:', row);
+      }
+      
+      // Only add product if opiniao_consulta is not "NA" (trim and check case-insensitive)
+      const opiniaoConsultaTrimmed = product.opiniao_consulta.toString().trim().toUpperCase();
+      if (opiniaoConsultaTrimmed !== 'NA') {
+        products.push(product);
+      } else {
+        console.log(`Filtered out product: ${product.name} (opiniao_consulta: "${product.opiniao_consulta}")`);
+      }
     }
     
     return products;

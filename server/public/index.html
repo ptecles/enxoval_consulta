@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Hotmart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input {
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste da API Hotmart</h1>
+    
+    <div class="card">
+        <h2>1. Testar Token</h2>
+        <button id="testToken">Testar Token</button>
+        <div id="tokenResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>2. Testar API</h2>
+        <button id="testApi">Testar API</button>
+        <div id="apiResult"></div>
+    </div>
+    
+    <div class="card">
+        <h2>3. Verificar Cliente</h2>
+        <input type="email" id="emailInput" placeholder="Digite o email para verificar">
+        <button id="verifyCustomer">Verificar Cliente</button>
+        <div id="verifyResult"></div>
+    </div>
+
+    <script>
+        // Função para formatar JSON
+        function formatJSON(json) {
+            return JSON.stringify(json, null, 2);
+        }
+
+        // Testar Token
+        document.getElementById('testToken').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('tokenResult');
+            resultDiv.innerHTML = '<p>Carregando...</p>';
+            
+            try {
+                const response = await fetch('/api/test-hotmart-token');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Resultado:</h3>
+                    <pre>${formatJSON(data)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Erro:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+
+        // Testar API
+        document.getElementById('testApi').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = '<p>Carregando...</p>';
+            
+            try {
+                const response = await fetch('/api/test-hotmart-api');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Resultado:</h3>
+                    <pre>${formatJSON(data)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Erro:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+
+        // Verificar Cliente
+        document.getElementById('verifyCustomer').addEventListener('click', async () => {
+            const email = document.getElementById('emailInput').value;
+            const resultDiv = document.getElementById('verifyResult');
+            
+            if (!email) {
+                resultDiv.innerHTML = '<p>Por favor, digite um email.</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>Carregando...</p>';
+            
+            try {
+                const response = await fetch('/api/verify-hotmart-customer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h3>Resultado:</h3>
+                    <pre>${formatJSON(data)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>Erro:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
