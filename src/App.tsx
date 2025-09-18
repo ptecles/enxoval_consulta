@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Fetch products from Google Sheets when component mounts
   useEffect(() => {
@@ -101,7 +102,16 @@ const App: React.FC = () => {
         <p className="promo-text">Aproveite essa novidade exclusiva para as alunas!</p>
       </div>
       <header className="App-header-top">
-        <div className="header-spacer"></div>
+        <div className="header-left">
+          <button 
+            className={`mobile-menu-toggle ${isMobileMenuOpen ? 'active' : ''}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
         <img src="/images/logo.png" alt="Enxoval Inteligente" className="header-logo" />
         <div className="social-icons">
           <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
@@ -116,7 +126,7 @@ const App: React.FC = () => {
         </div>
       </header>
       <div className="header-bar-bottom">
-        <div className="categories-nav">
+        <div className="categories-nav desktop-nav">
           <button 
             className={`category-btn ${!selectedCategory ? 'active' : ''}`}
             onClick={() => {
@@ -139,6 +149,42 @@ const App: React.FC = () => {
               onClick={() => {
                 const newCategory = category === selectedCategory ? '' : category;
                 setSelectedCategory(newCategory);
+                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
+              }}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Mobile Menu Overlay */}
+      <div className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}>
+        <div className="mobile-menu">
+          <button 
+            className={`mobile-menu-item ${!selectedCategory ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory('');
+              setSelectedBrand('');
+              setSearchResults([]);
+              setHasSearched(false);
+              setIsMobileMenuOpen(false);
+              const searchInput = document.querySelector<HTMLInputElement>('.search-input');
+              if (searchInput) {
+                searchInput.value = '';
+              }
+            }}
+          >
+            Home
+          </button>
+          {categoryOptions.map(category => (
+            <button 
+              key={category} 
+              className={`mobile-menu-item ${selectedCategory === category ? 'active' : ''}`}
+              onClick={() => {
+                const newCategory = category === selectedCategory ? '' : category;
+                setSelectedCategory(newCategory);
+                setIsMobileMenuOpen(false);
                 handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
               }}
             >
@@ -206,8 +252,9 @@ const App: React.FC = () => {
                 key={brand}
                 className={`brand-card ${selectedBrand === brand ? 'active' : ''}`}
                 style={{
-                  backgroundColor: index % 3 === 0 ? '#638ca6' : 
-                                 index % 3 === 1 ? '#d98c73' : '#c2d1db'
+                  backgroundColor: index % 4 === 0 ? '#8fbc8f' : 
+                                 index % 4 === 1 ? '#638ca6' : 
+                                 index % 4 === 2 ? '#e67e40' : '#f4a792'
                 }}
                 onClick={() => {
                   const newBrand = brand === selectedBrand ? '' : brand;
