@@ -15,7 +15,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 
   return (
     <div className="search-bar-content">
-      <h2>Consulte a opinião da Elisa sobre os produtos que ela recomenda</h2>
+      <div className="search-title">
+        <h2>Consulte a opinião da Elisa</h2>
+        <p className="search-subtitle">sobre os produtos que ela recomenda</p>
+      </div>
       <form onSubmit={handleSubmit}>
         <div className="search-input-container">
           <input

@@ -49,8 +49,11 @@ const App: React.FC = () => {
     fetchProductData();
   }, []);
 
-  const handleSearch = (query: string) => {
-    if (!query.trim() && !selectedBrand && !selectedCategory) {
+  const handleSearch = (query: string, brandFilter?: string, categoryFilter?: string) => {
+    const currentBrand = brandFilter !== undefined ? brandFilter : selectedBrand;
+    const currentCategory = categoryFilter !== undefined ? categoryFilter : selectedCategory;
+    
+    if (!query.trim() && !currentBrand && !currentCategory) {
       setSearchResults([]);
       setHasSearched(false);
       return;
@@ -69,10 +72,10 @@ const App: React.FC = () => {
       );
       
       // Brand filter
-      const matchesBrand = !selectedBrand || product.marca === selectedBrand;
+      const matchesBrand = !currentBrand || product.marca === currentBrand;
       
       // Category filter
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesCategory = !currentCategory || product.category === currentCategory;
       
       // Product must match all active filters
       return matchesSearchQuery && matchesBrand && matchesCategory;
@@ -94,9 +97,56 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
+      <div className="header-bar-top">
+        <p className="promo-text">Aproveite essa novidade exclusiva para as alunas!</p>
+      </div>
       <header className="App-header-top">
-        <h1>Enxoval Inteligente: consultor de produtos</h1>
+        <div className="header-spacer"></div>
+        <img src="/images/logo.png" alt="Enxoval Inteligente" className="header-logo" />
+        <div className="social-icons">
+          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+            <img src="/images/youtube.png" alt="YouTube" className="social-icon" />
+          </a>
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+            <img src="/images/instagram.png" alt="Instagram" className="social-icon" />
+          </a>
+          <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer">
+            <img src="/images/tiktok.png" alt="TikTok" className="social-icon" />
+          </a>
+        </div>
       </header>
+      <div className="header-bar-bottom">
+        <div className="categories-nav">
+          <button 
+            className={`category-btn ${!selectedCategory ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory('');
+              setSelectedBrand('');
+              setSearchResults([]);
+              setHasSearched(false);
+              const searchInput = document.querySelector<HTMLInputElement>('.search-input');
+              if (searchInput) {
+                searchInput.value = '';
+              }
+            }}
+          >
+            Home
+          </button>
+          {categoryOptions.map(category => (
+            <button 
+              key={category} 
+              className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
+              onClick={() => {
+                const newCategory = category === selectedCategory ? '' : category;
+                setSelectedCategory(newCategory);
+                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
+              }}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
       <main className="App-main">
         <div className="search-container">
           <SearchBar onSearch={handleSearch} />
@@ -108,8 +158,9 @@ const App: React.FC = () => {
                 id="brand-filter" 
                 value={selectedBrand} 
                 onChange={(e) => {
-                  setSelectedBrand(e.target.value);
-                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '');
+                  const newBrand = e.target.value;
+                  setSelectedBrand(newBrand);
+                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', newBrand);
                 }}
               >
                 <option value="">Todas as marcas</option>
@@ -125,8 +176,9 @@ const App: React.FC = () => {
                 id="category-filter" 
                 value={selectedCategory} 
                 onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '');
+                  const newCategory = e.target.value;
+                  setSelectedCategory(newCategory);
+                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
                 }}
               >
                 <option value="">Todas as categorias</option>
@@ -136,6 +188,46 @@ const App: React.FC = () => {
               </select>
             </div>
           </div>
+        </div>
+        
+        <div className="brands-container">
+          <button 
+            className="scroll-arrow scroll-arrow-left"
+            onClick={() => {
+              const container = document.querySelector('.brands-scroll');
+              if (container) container.scrollBy({ left: -300, behavior: 'smooth' });
+            }}
+          >
+            &#8249;
+          </button>
+          <div className="brands-scroll">
+            {brandOptions.map((brand, index) => (
+              <div 
+                key={brand}
+                className={`brand-card ${selectedBrand === brand ? 'active' : ''}`}
+                style={{
+                  backgroundColor: index % 3 === 0 ? '#638ca6' : 
+                                 index % 3 === 1 ? '#d98c73' : '#c2d1db'
+                }}
+                onClick={() => {
+                  const newBrand = brand === selectedBrand ? '' : brand;
+                  setSelectedBrand(newBrand);
+                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', newBrand);
+                }}
+              >
+                <span className="brand-name">{brand}</span>
+              </div>
+            ))}
+          </div>
+          <button 
+            className="scroll-arrow scroll-arrow-right"
+            onClick={() => {
+              const container = document.querySelector('.brands-scroll');
+              if (container) container.scrollBy({ left: 300, behavior: 'smooth' });
+            }}
+          >
+            &#8250;
+          </button>
         </div>
         
         {isLoading ? (
@@ -173,12 +265,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
               ))
-            )}
-            {!hasSearched && (
-              <div className="search-instructions">
-                <p>Digite um termo para buscar produtos para bebês</p>
-                <p>Exemplos: fralda, mamadeira, carrinho...</p>
-              </div>
             )}
           </div>
         )}
