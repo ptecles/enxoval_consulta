@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileExpandedCategory, setMobileExpandedCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -249,29 +250,79 @@ const App: React.FC = () => {
           >
             Home
           </button>
-          {categoryOptions.map(category => (
-            <button 
-              key={category} 
-              className={`mobile-menu-item ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => {
-                const newCategory = category === selectedCategory ? '' : category;
-                setSelectedCategory(newCategory);
-                setIsMobileMenuOpen(false);
-                const newSubcategories = newCategory
-                  ? Array.from(new Set(allProducts
-                      .filter(p => p.category === newCategory)
-                      .map(p => p.subcategory)
-                      .filter(sc => sc && sc.trim() !== '')
-                    )).sort()
-                  : [];
-                setSubcategoryOptions(newSubcategories);
-                setSelectedSubcategory('');
-                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory, '');
-              }}
-            >
-              {category}
-            </button>
-          ))}
+          {categoryOptions.map(category => {
+            const categorySubcategories = Array.from(new Set(allProducts
+              .filter(p => p.category === category)
+              .map(p => p.subcategory)
+              .filter(sc => sc && sc.trim() !== '')
+            )).sort();
+            
+            const hasSubcategories = categorySubcategories.length > 0;
+            const isExpanded = mobileExpandedCategory === category;
+            
+            return (
+              <div key={category} className="mobile-category-container">
+                <div className="mobile-category-header">
+                  <button 
+                    className={`mobile-menu-item category-main ${selectedCategory === category ? 'active' : ''}`}
+                    onClick={() => {
+                      if (!hasSubcategories) {
+                        // Se não tem subcategorias, vai direto
+                        const newCategory = category === selectedCategory ? '' : category;
+                        setSelectedCategory(newCategory);
+                        setSelectedSubcategory('');
+                        setSubcategoryOptions([]);
+                        setIsMobileMenuOpen(false);
+                        handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory, '');
+                      } else {
+                        // Se tem subcategorias, expande/colapsa
+                        setMobileExpandedCategory(isExpanded ? null : category);
+                      }
+                    }}
+                  >
+                    <span className="category-text">{category}</span>
+                    {hasSubcategories && (
+                      <span className={`expand-icon ${isExpanded ? 'expanded' : ''}`}>▼</span>
+                    )}
+                  </button>
+                </div>
+                
+                {hasSubcategories && isExpanded && (
+                  <div className="mobile-subcategory-list">
+                    <button
+                      className={`mobile-submenu-item ${selectedCategory === category && !selectedSubcategory ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setSelectedSubcategory('');
+                        setSubcategoryOptions(categorySubcategories);
+                        setMobileExpandedCategory(null);
+                        setIsMobileMenuOpen(false);
+                        handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, category, '');
+                      }}
+                    >
+                      Todas de {category}
+                    </button>
+                    {categorySubcategories.map(sub => (
+                      <button
+                        key={sub}
+                        className={`mobile-submenu-item ${selectedCategory === category && selectedSubcategory === sub ? 'active' : ''}`}
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setSelectedSubcategory(sub);
+                          setSubcategoryOptions(categorySubcategories);
+                          setMobileExpandedCategory(null);
+                          setIsMobileMenuOpen(false);
+                          handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, category, sub);
+                        }}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       <main className="App-main">
@@ -413,12 +464,28 @@ const App: React.FC = () => {
                     )}
                     <p>{product.description}</p>
                     {product.opiniao && <p className="product-opinion"><strong>Opinião:</strong> {product.opiniao}</p>}
-                    <button 
-                      className="product-link"
-                      onClick={() => handleProductClick(product)}
-                    >
-                      Ver opinião
-                    </button>
+                    {product.opiniao_consulta && (
+                      <div className="product-consultation-opinion">
+                        <p className="opinion-text">{product.opiniao_consulta}</p>
+                      </div>
+                    )}
+                    {product.link ? (
+                      <a 
+                        href={product.link.startsWith('http') ? product.link : `https://${product.link}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="product-link"
+                      >
+                        Comprar na Amazon
+                      </a>
+                    ) : (
+                      <button 
+                        className="product-link disabled"
+                        disabled
+                      >
+                        Link não disponível
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
