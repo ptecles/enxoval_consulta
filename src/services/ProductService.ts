@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   imageUrl: string;
   category: string;
+  subcategory: string;
   opiniao: string;
   link: string;
   marca: string;
@@ -60,6 +61,7 @@ class ProductService {
         price: row.price || row.Preco || row.preco ? parseFloat(row.price || row.Preco || row.preco) : 0,
         imageUrl: row.imagem || row.Imagem || row.imageUrl || row.ImageUrl || 'https://via.placeholder.com/150',
         category: row.category || row.Categoria || row.categoria || 'Uncategorized',
+        subcategory: row.subcategory || row.Subcategory || row.Subcategoria || row.subcategoria || '',
         opiniao: row.Opiniao || row.opiniao || row.Opinion || row.opinion || '',
         link: row.Link || row.link || row.URL || row.url || '',
         marca: row.Marca || row.marca || row.Brand || row.brand || '',

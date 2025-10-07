@@ -12,8 +12,11 @@ const App: React.FC = () => {
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [subcategoryOptions, setSubcategoryOptions] = useState<string[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -39,6 +42,8 @@ const App: React.FC = () => {
         
         setBrandOptions(uniqueBrands);
         setCategoryOptions(uniqueCategories);
+        // initialize subcategories empty until a category is chosen
+        setSubcategoryOptions([]);
       } catch (err) {
         console.error('Error loading products:', err);
         setError('Failed to load products. Please try again later.');
@@ -50,11 +55,12 @@ const App: React.FC = () => {
     fetchProductData();
   }, []);
 
-  const handleSearch = (query: string, brandFilter?: string, categoryFilter?: string) => {
+  const handleSearch = (query: string, brandFilter?: string, categoryFilter?: string, subcategoryFilter?: string) => {
     const currentBrand = brandFilter !== undefined ? brandFilter : selectedBrand;
     const currentCategory = categoryFilter !== undefined ? categoryFilter : selectedCategory;
+    const currentSubcategory = subcategoryFilter !== undefined ? subcategoryFilter : selectedSubcategory;
     
-    if (!query.trim() && !currentBrand && !currentCategory) {
+    if (!query.trim() && !currentBrand && !currentCategory && !currentSubcategory) {
       setSearchResults([]);
       setHasSearched(false);
       return;
@@ -63,7 +69,7 @@ const App: React.FC = () => {
     // Split the search query into individual words
     const searchWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 0);
     
-    // Apply all filters: search query, brand, and category
+    // Apply all filters: search query, brand, category, and subcategory
     const filteredProducts = allProducts.filter((product: Product) => {
       // Text search filter
       const productName = product.name.toLowerCase();
@@ -77,9 +83,12 @@ const App: React.FC = () => {
       
       // Category filter
       const matchesCategory = !currentCategory || product.category === currentCategory;
+
+      // Subcategory filter (only if a category is selected; if not, ignore)
+      const matchesSubcategory = !currentSubcategory || product.subcategory === currentSubcategory;
       
       // Product must match all active filters
-      return matchesSearchQuery && matchesBrand && matchesCategory;
+      return matchesSearchQuery && matchesBrand && matchesCategory && matchesSubcategory;
     });
     
     setSearchResults(filteredProducts);
@@ -131,9 +140,12 @@ const App: React.FC = () => {
             className={`category-btn ${!selectedCategory ? 'active' : ''}`}
             onClick={() => {
               setSelectedCategory('');
+              setSelectedSubcategory('');
+              setSubcategoryOptions([]);
               setSelectedBrand('');
               setSearchResults([]);
               setHasSearched(false);
+              setOpenDropdown(null);
               const searchInput = document.querySelector<HTMLInputElement>('.search-input');
               if (searchInput) {
                 searchInput.value = '';
@@ -142,21 +154,79 @@ const App: React.FC = () => {
           >
             Home
           </button>
-          {categoryOptions.map(category => (
-            <button 
-              key={category} 
-              className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => {
-                const newCategory = category === selectedCategory ? '' : category;
-                setSelectedCategory(newCategory);
-                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
-              }}
-            >
-              {category}
-            </button>
-          ))}
+          {categoryOptions.map(category => {
+            const categorySubcategories = Array.from(new Set(allProducts
+              .filter(p => p.category === category)
+              .map(p => p.subcategory)
+              .filter(sc => sc && sc.trim() !== '')
+            )).sort();
+            
+            return (
+              <div 
+                key={category} 
+                className="category-dropdown-container"
+                onMouseEnter={() => categorySubcategories.length > 0 && setOpenDropdown(category)}
+                onMouseLeave={() => setOpenDropdown(null)}
+              >
+                <button 
+                  className={`category-btn ${selectedCategory === category ? 'active' : ''}`}
+                  onClick={() => {
+                    const newCategory = category === selectedCategory ? '' : category;
+                    setSelectedCategory(newCategory);
+                    // Reset subcategory when category changes
+                    const newSubcategories = newCategory
+                      ? Array.from(new Set(allProducts
+                          .filter(p => p.category === newCategory)
+                          .map(p => p.subcategory)
+                          .filter(sc => sc && sc.trim() !== '')
+                        )).sort()
+                      : [];
+                    setSubcategoryOptions(newSubcategories);
+                    setSelectedSubcategory('');
+                    setOpenDropdown(null);
+                    handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory, '');
+                  }}
+                >
+                  {category}
+                </button>
+                
+                {openDropdown === category && categorySubcategories.length > 0 && (
+                  <div className="subcategory-dropdown">
+                    <button
+                      className={`subcategory-item ${selectedCategory === category && !selectedSubcategory ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setSelectedSubcategory('');
+                        setSubcategoryOptions(categorySubcategories);
+                        setOpenDropdown(null);
+                        handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, category, '');
+                      }}
+                    >
+                      Todas de {category}
+                    </button>
+                    {categorySubcategories.map(sub => (
+                      <button
+                        key={sub}
+                        className={`subcategory-item ${selectedCategory === category && selectedSubcategory === sub ? 'active' : ''}`}
+                        onClick={() => {
+                          setSelectedCategory(category);
+                          setSelectedSubcategory(sub);
+                          setSubcategoryOptions(categorySubcategories);
+                          setOpenDropdown(null);
+                          handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, category, sub);
+                        }}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
+
       
       {/* Mobile Menu Overlay */}
       <div className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}>
@@ -165,6 +235,8 @@ const App: React.FC = () => {
             className={`mobile-menu-item ${!selectedCategory ? 'active' : ''}`}
             onClick={() => {
               setSelectedCategory('');
+              setSelectedSubcategory('');
+              setSubcategoryOptions([]);
               setSelectedBrand('');
               setSearchResults([]);
               setHasSearched(false);
@@ -185,7 +257,16 @@ const App: React.FC = () => {
                 const newCategory = category === selectedCategory ? '' : category;
                 setSelectedCategory(newCategory);
                 setIsMobileMenuOpen(false);
-                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
+                const newSubcategories = newCategory
+                  ? Array.from(new Set(allProducts
+                      .filter(p => p.category === newCategory)
+                      .map(p => p.subcategory)
+                      .filter(sc => sc && sc.trim() !== '')
+                    )).sort()
+                  : [];
+                setSubcategoryOptions(newSubcategories);
+                setSelectedSubcategory('');
+                handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory, '');
               }}
             >
               {category}
@@ -224,12 +305,41 @@ const App: React.FC = () => {
                 onChange={(e) => {
                   const newCategory = e.target.value;
                   setSelectedCategory(newCategory);
+                  // Build subcategory options when category filter changes
+                  const newSubcategories = newCategory
+                    ? Array.from(new Set(allProducts
+                        .filter(p => p.category === newCategory)
+                        .map(p => p.subcategory)
+                        .filter(sc => sc && sc.trim() !== '')
+                      )).sort()
+                    : [];
+                  setSubcategoryOptions(newSubcategories);
+                  setSelectedSubcategory('');
                   handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, newCategory);
                 }}
               >
                 <option value="">Todas as categorias</option>
                 {categoryOptions.map(category => (
                   <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-item">
+              <label htmlFor="subcategory-filter">Subcategoria:</label>
+              <select
+                id="subcategory-filter"
+                value={selectedSubcategory}
+                onChange={(e) => {
+                  const newSub = e.target.value;
+                  setSelectedSubcategory(newSub);
+                  handleSearch(document.querySelector<HTMLInputElement>('.search-input')?.value || '', undefined, selectedCategory, newSub);
+                }}
+                disabled={!selectedCategory || subcategoryOptions.length === 0}
+              >
+                <option value="">Todas as subcategorias</option>
+                {subcategoryOptions.map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
                 ))}
               </select>
             </div>
@@ -295,7 +405,7 @@ const App: React.FC = () => {
                   <div className="product-info">
                     <h3>{product.name}</h3>
                     {product.marca && <p className="product-brand"><strong>Marca:</strong> {product.marca}</p>}
-                    <p className="product-category">Categoria: {product.category}</p>
+                    <p className="product-category">Categoria: {product.category}{product.subcategory ? ` › ${product.subcategory}` : ''}</p>
                     {product.imageUrl && product.imageUrl !== 'https://via.placeholder.com/150' && (
                       <div className="product-image">
                         <img src={product.imageUrl} alt={product.name} />
