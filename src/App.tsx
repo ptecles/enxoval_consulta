@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import SearchBar from './components/SearchBar';
-import ProductModal from './components/ProductModal';
 import ProductService, { Product } from './services/ProductService';
 
 const App: React.FC = () => {
@@ -18,8 +17,6 @@ const App: React.FC = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileExpandedCategory, setMobileExpandedCategory] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Fetch products from Google Sheets when component mounts
@@ -96,15 +93,7 @@ const App: React.FC = () => {
     setHasSearched(true);
   };
 
-  const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
-  };
 
   return (
     <div className="App">
@@ -503,11 +492,6 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
-      <ProductModal 
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-      />
     </div>
   );
 };
